@@ -101,7 +101,7 @@ stages:
      
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/ProdBranch'))
 
-      steps:
+  steps:
 
        - task: NodeTool@0
 
@@ -113,18 +113,18 @@ stages:
 
           - bash: 
 
-              npm install sfdx-cli --global
+          npm install sfdx-cli --global
 
-               displayName: Install Salesforce CLI
+          displayName: Install Salesforce CLI
 
           - bash: 
 
-            sfdx force:auth:jwt:grant --clientid $(salesforceDevOrgClientId) --jwtkeyfile ./buildfiles/server.key --username $(salesforceDevOrgUserName) --instanceurl $(salesforceDevOrgInstanceURL) -a devOrg
+          sfdx force:auth:jwt:grant --clientid $(salesforceDevOrgClientId) --jwtkeyfile ./buildfiles/server.key --username $(salesforceDevOrgUserName) --instanceurl $(salesforceDevOrgInstanceURL) -a devOrg
 
-            displayName: Authorize salesforce org
+        displayName: Authorize salesforce org
         
           - bash: 
 
-            sfdx force:mdapi:deploy -l RunLocalTests -d ./toDeploy -u devOrg -w 10
+          sfdx force:mdapi:deploy -l RunLocalTests -d ./toDeploy -u devOrg -w 10
 
-            displayName: Deploy source code to Dev Org
+        displayName: Deploy source code to Dev Org
