@@ -100,7 +100,7 @@ stages:
     pool:
 
      vmImage: 'ubuntu-latest'
-      
+     environment: test
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/ProdBranch'))
 
     steps:
