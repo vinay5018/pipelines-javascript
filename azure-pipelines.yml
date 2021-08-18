@@ -1,21 +1,132 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+# Starter pipeline
+
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+
+# Add steps that build, run tests, deploy, and more:
+
+# https://aka.ms/yaml
 
 trigger:
-- master
 
-pool:
-  vmImage: ubuntu-latest
+  batch: "true"
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
+  branches:
 
-- script: |
-    npm install
-    npm run build
-  displayName: 'npm install and build'
+    include:
+
+      - ProdBranch
+
+  paths:
+
+    exclude:
+
+      - README.md
+
+      - azure-pipelines.yml
+
+pr:
+
+  autoCancel: "true"
+
+  branches:
+
+    include:
+
+      - ProdBranch
+
+  paths:
+
+    exclude:
+
+      - README.md
+
+stages:
+
+- stage:
+
+  jobs:
+
+  #Deploy develop to ORG
+
+  - job: Deploy
+
+    pool:
+
+      vmImage: 'ubuntu-latest'
+
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/ProdBranch'))
+
+    steps:
+
+      - task: NodeTool@0
+
+        inputs:
+
+          versionSpec: '16.x'
+
+          checkLatest: true
+
+      - bash: 
+
+          npm install sfdx-cli --global
+
+        displayName: Install Salesforce CLI
+
+      - bash: 
+
+          sfdx force:auth:jwt:grant --clientid $(salesforceDevOrgClientId) --jwtkeyfile ./buildfiles/server.key --username $(salesforceDevOrgUserName) --instanceurl $(salesforceDevOrgInstanceURL) -a devOrg
+
+        displayName: Authorize salesforce org
+
+      - bash: 
+
+          sfdx force:source:convert -r ./force-app -d ./toDeploy
+
+        displayName: Convert to deploy source
+
+      - bash: 
+
+          sfdx force:mdapi:deploy -l RunLocalTests -c -d ./toDeploy -u devOrg -w 10
+
+        displayName: Run validation on source code
+- stage:
+
+  jobs:
+
+  #Deploy develop to ORG
+
+  - job: Deploy
+
+    pool:
+
+     vmImage: 'ubuntu-latest'
+      
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/ProdBranch'))
+
+    steps:
+
+      - task: NodeTool@0
+
+        inputs:
+
+          versionSpec: '16.x'
+
+          checkLatest: true
+
+      - bash: 
+
+          npm install sfdx-cli --global
+
+        displayName: Install Salesforce CLI
+
+      - bash: 
+
+          sfdx force:auth:jwt:grant --clientid $(salesforceDevOrgClientId) --jwtkeyfile ./buildfiles/server.key --username $(salesforceDevOrgUserName) --instanceurl $(salesforceDevOrgInstanceURL) -a devOrg
+
+        displayName: Authorize salesforce org
+        
+      - bash: 
+
+          sfdx force:mdapi:deploy -l RunLocalTests -d ./toDeploy -u devOrg -w 10
+
+        displayName: Deploy source code to Dev Org
