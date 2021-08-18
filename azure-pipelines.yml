@@ -89,18 +89,16 @@ stages:
           sfdx force:mdapi:deploy -l RunLocalTests -c -d ./toDeploy -u devOrg -w 10
 
         displayName: Run validation on source code
-- stage:
 
+- stage: 'Production'
   jobs:
-
-  #Deploy develop to ORG
-
-  - job: Deploy
-
+  - deployment: 'DeployToProduction'
+    environment: 'test'
+        
     pool:
 
      vmImage: 'ubuntu-latest'
-     environment: 'test'
+     
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/ProdBranch'))
 
     steps:
